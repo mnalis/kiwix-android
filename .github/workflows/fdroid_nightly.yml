@@ -27,12 +27,25 @@ jobs:
           ndk-version: r27d
           link-to-sdk: true
 
+      - name: Set env
+        run: echo "COMMIT_SHA=$(git log -n 1 --format='%h')" >> $GITHUB_ENV
+
       - name: Build
         run: |
           # use timestamp as Version Code
           export versionCode=$(date '+%s')
           sed -i "s,^\(\s*versionCode\)  *[0-9].*,\1 $versionCode," app/build.gradle.kts
           ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Kiwix-android-debug-$COMMIT_SHA.apk
+
+      - name: Archive APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kiwix-android-debug-apk-${{ env.COMMIT_SHA }}
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
 
       - name: fdroid nightly
         run: |
